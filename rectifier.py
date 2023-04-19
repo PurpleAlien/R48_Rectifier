@@ -22,6 +22,10 @@ def float_to_bytearray(f):
 #  - if False the change is temporary (30 seconds per command received, 'online command', repeat at 15 second intervals).
 # Voltage between 41.0 and 58.5V - fan will go high below 48V! 
 def set_voltage(channel, voltage, fixed=False):
+    
+    if voltage < 41.0 or voltage > 58.5:
+        print('Voltage should be between 41.0V and 58.5V')    
+        return
 
     bus = can.interface.Bus(bustype='socketcan', channel=channel, bitrate=125000)    
 
