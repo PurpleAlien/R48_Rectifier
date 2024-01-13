@@ -21,6 +21,7 @@ OUTPUT_CURRENT_MAX = OUTPUT_CURRENT_RATED_VALUE
 
 # needs root/sudo access, or configure this part on the OS
 def config(channel):
+    subprocess.call(['ip', 'link', 'set', 'down', channel])
     subprocess.call(['ip', 'link', 'set', channel, 'type', 'can', 'bitrate', str(BITRATE), 'restart-ms', '1500'])
     subprocess.call(['ip', 'link', 'set', 'up', channel])
 
