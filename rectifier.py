@@ -7,7 +7,15 @@ import argparse
 
 # CAN stuff
 ARBITRATION_ID = 0x0607FF83
+ARBITRATION_ID_READ = 0x06080783
 BITRATE = 125000
+
+# 01 : output voltage
+# 02 : output current
+# 03 : output current limit
+# 04 : temperature in C
+# 05 : supply voltage
+READ_COMMANDS = [0x01, 0x02, 0x03, 0x04, 0x05]
 
 # 62.5A is the nominal current of Emerson/Vertiv R48-3000e and corresponds to 121%
 OUTPUT_CURRENT_RATED_VALUE = 62.5
@@ -39,6 +47,25 @@ def send_can_message(channel, data):
             print(f"Command sent on {bus.channel_info}")
     except can.CanError:
         print("Command NOT sent")
+
+# CAN message receiver
+def receive_can_message(channel):
+    try:
+        with can.interface.Bus(receive_own_messages=True, bustype='socketcan', channel=channel, bitrate=BITRATE) as bus:
+          print_listener = can.Printer()
+          can.Notifier(bus, [print_listener])
+          
+          # Keep sending requests for all data every second 
+          while True:
+            for p in READ_COMMANDS: 
+                data = [0x01, 0xF0, 0x00, p, 0x00, 0x00, 0x00, 0x00]
+                msg = can.Message(arbitration_id=ARBITRATION_ID_READ, data=data, is_extended_id=True)
+                bus.send(msg) 
+                time.sleep(0.1)
+ 
+            time.sleep(1.0)
+    except can.CanError:
+        print("Receive went wrong")
 
 # Set the output voltage to the new value. 
 # The 'fixed' parameter 
@@ -141,13 +168,14 @@ if __name__ == "__main__":
     if args.mode == "set":
         print(f"{args.permanent}")
         if args.voltage is not None:
-            set_voltage(args.interface , args.voltage , args.permanent)
+            set_voltage(args.interface, args.voltage, args.permanent)
         if args.current_value is not None:
-            set_current_value(args.interface , args.current_value , args.permanent)
+            set_current_value(args.interface, args.current_value, args.permanent)
         if args.current_percent is not None:
-            set_current_percentage(args.interface , args.current_percent , args.permanent)
+            set_current_percentage(args.interface, args.current_percent, args.permanent)
     elif args.mode== "get":
-        print("Mode 'get' not implemented yet")
+        receive_can_message(args.interface)
+        #print("Mode 'get' not implemented yet")
 
     #config('can0')
     #set_voltage('can0', 52.0, False)
