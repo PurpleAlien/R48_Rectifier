@@ -122,7 +122,7 @@ if __name__ == "__main__":
     parser.add_argument('-cv', '--current_value', type=float,
                     help='Current Set Point of the Charger (5.5ADC - 62.5ADC)')
     parser.add_argument('-cp', '--current_percent', type=float,
-                    help='Current Set Point of the Charger in percent (10% - 121%)')
+                    help='Current Set Point of the Charger in percent (10%% - 121%%)')
 
     parser.add_argument('-p', '--permanent', action='store_true',
                     help='Make settings permanent')
