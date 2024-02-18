@@ -129,8 +129,7 @@ def set_current_percentage(channel, current, fixed=False):
 # The 'fixed' parameter
 #  - if True makes the change permanent ('offline command')
 #  - if False the change is temporary (30 seconds per command received, 'online command', repeat at 15 second intervals).
-def set_current_value(channel, current, fixed=False):
-    
+def set_current_value(channel, current, fixed=False): 
     if OUTPUT_CURRENT_MIN <= current <= OUTPUT_CURRENT_MAX:
         # 62.5A is the nominal current of Emerson/Vertiv R48-3000e and corresponds to 121%
         percentage = (current/OUTPUT_CURRENT_RATED_VALUE)*OUTPUT_CURRENT_RATED_PERCENTAGE
@@ -203,7 +202,6 @@ if __name__ == "__main__":
             set_current_percentage(args.interface, args.current_percent, args.permanent)
     elif args.mode== "get":
         receive_can_message(args.interface)
-        #print("Mode 'get' not implemented yet")
 
     #config('can0')
     #set_voltage('can0', 52.0, False)
