@@ -6,16 +6,20 @@ import time
 import argparse
 
 # CAN stuff
-ARBITRATION_ID = 0x0607FF83
-ARBITRATION_ID_READ = 0x06080783
+ARBITRATION_ID = 0x0607FF83 # or 06080783 ?
+ARBITRATION_ID_READ = 0x06000783
 BITRATE = 125000
 
+# individual properties to read out, data: 0x01, 0xF0, 0x00, p, 0x00, 0x00, 0x00, 0x00 with p:
 # 01 : output voltage
 # 02 : output current
 # 03 : output current limit
 # 04 : temperature in C
 # 05 : supply voltage
 READ_COMMANDS = [0x01, 0x02, 0x03, 0x04, 0x05]
+
+# Reads all of the above and a few more at once
+READ_ALL = [0x00, 0xF0, 0x00, 0x80, 0x46, 0xA5, 0x34, 0x00] 
 
 # 62.5A is the nominal current of Emerson/Vertiv R48-3000e and corresponds to 121%
 OUTPUT_CURRENT_RATED_VALUE = 62.5
@@ -57,12 +61,16 @@ def receive_can_message(channel):
           
           # Keep sending requests for all data every second 
           while True:
-            for p in READ_COMMANDS: 
-                data = [0x01, 0xF0, 0x00, p, 0x00, 0x00, 0x00, 0x00]
-                msg = can.Message(arbitration_id=ARBITRATION_ID_READ, data=data, is_extended_id=True)
-                bus.send(msg) 
-                time.sleep(0.1)
- 
+            # Individually
+            #for p in READ_COMMANDS: 
+            #    data = [0x01, 0xF0, 0x00, p, 0x00, 0x00, 0x00, 0x00]
+            #    msg = can.Message(arbitration_id=ARBITRATION_ID_READ, data=data, is_extended_id=True)
+            #    bus.send(msg) 
+            #    time.sleep(0.1)
+
+            # All at once
+            msg = can.Message(arbitration_id=ARBITRATION_ID_READ, data=READ_ALL, is_extended_id=True)
+            bus.send(msg)
             time.sleep(1.0)
     except can.CanError:
         print("Receive went wrong")
