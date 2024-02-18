@@ -57,7 +57,8 @@ def receive_can_message(channel):
     try:
         with can.interface.Bus(receive_own_messages=True, bustype='socketcan', channel=channel, bitrate=BITRATE) as bus:
           print_listener = can.Printer()
-          can.Notifier(bus, [print_listener])
+          #can.Notifier(bus, [print_listener])
+          can.Notifier(bus, [can_listener])
           
           # Keep sending requests for all data every second 
           while True:
@@ -74,6 +75,25 @@ def receive_can_message(channel):
             time.sleep(1.0)
     except can.CanError:
         print("Receive went wrong")
+
+# CAN receiver listener
+def can_listener(msg):
+    # Is it a response to our request
+    if msg.data[0] == 0x41:
+        # Convert value to float (it's the same for all)
+        val = struct.unpack('>f', msg.data[4:8])[0]
+        # Check what data it is
+        match msg.data[3] :
+            case 0x01:
+                print("Vout (VDC) : " + str(val))
+            case 0x02:
+                print("Iout (IDC) : " + str(val))
+            case 0x03:
+                print("Output Current Limit : " + str(val))
+            case 0x04:
+                print("Temp (C) : " + str(val))
+            case 0x05:
+               print("Vin (VAC) : " + str(val)) 
 
 # Set the output voltage to the new value. 
 # The 'fixed' parameter 
