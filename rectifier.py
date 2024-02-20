@@ -56,7 +56,7 @@ def send_can_message(channel, data):
 def receive_can_message(channel):
     try:
         with can.interface.Bus(receive_own_messages=True, bustype='socketcan', channel=channel, bitrate=BITRATE) as bus:
-          print_listener = can.Printer()
+          #print_listener = can.Printer()
           #can.Notifier(bus, [print_listener])
           can.Notifier(bus, [can_listener])
           
