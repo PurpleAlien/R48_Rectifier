@@ -51,15 +51,12 @@ def receive_can_message(channel):
 
 # CAN receiver listener
 def can_listener(msg):
+
+    global v_out, i_out, temp, v_in, i_limit
+
     if not hasattr(can_listener, "counter"):
         can_listener.counter = 0
     
-    v_out = 0.0
-    i_out = 0.0
-    temp = 0.0
-    v_in = 0.0
-    i_limit = 0.0
-
     # Is it a response to our request
     if msg.data[0] == 0x41:
         # Convert value to float (it's the same for all)
@@ -114,6 +111,12 @@ def can_listener(msg):
         fileObj.flush()
         fileObj.close()
         outLine = os.system('/bin/mv /ramdisk/R48_RECTIFIER.prom.tmp /ramdisk/R48_RECTIFIER.prom')
+
+        v_out = 0.0
+        i_out = 0.0
+        temp = 0.0
+        v_in = 0.0
+        i_limit = 0.0
 
         can_listener.counter = 0
 
