@@ -163,6 +163,17 @@ def restart_overvoltage(channel, state=False):
         data = [0x03, 0xF0, 0x00, 0x39, 0x00, 0x01, 0x00, 0x00]
     send_can_message(channel, data)
 
+# Function to parse boolean values (case-insensitive)
+def str_to_bool(value):
+    if isinstance(value, bool):
+        return value
+    if value.lower() in {'true', 't', 'yes', '1'}:
+        return True
+    elif value.lower() in {'false', 'f', 'no', '0'}:
+        return False
+    else:
+        raise argparse.ArgumentTypeError(f"Invalid boolean value: {value}")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Set/Get Parameters from Emerson/Vertiv Rectifiers.')
@@ -170,22 +181,41 @@ if __name__ == "__main__":
     parser.add_argument('-m', '--mode', default="none",
                     help='Mode of Operation (set/get)')
 
+    # DC voltage
     parser.add_argument('-v', '--voltage', type=float,
                     help='Voltage Set Point of the Charger (41.0VDC - 58.5VDV)')
 
+    # DC current
     parser.add_argument('-cv', '--current_value', type=float,
                     help='Current Set Point of the Charger (5.5ADC - 62.5ADC)')
     parser.add_argument('-cp', '--current_percent', type=float,
                     help='Current Set Point of the Charger in percent (10%% - 121%%)')
 
+    # Permanent settings for the above
     parser.add_argument('-p', '--permanent', action='store_true',
                     help='Make settings permanent')
 
+    # CAN interfaace configuration
     parser.add_argument('-I', '--interface', default="can0",
                     help='Adapter Interface (can0, can1, ...)')
 
     parser.add_argument('-C', '--configure', action='store_true',
                     help='Configure link (bitrate, bring up interface) as well') 
+
+    # Walk in (ramp up DC voltage over time)
+    parser.add_argument('--walk_in', type=bool, 
+                        help='Enable (True) or disable (False) the walk-in process.')
+    parser.add_argument('--walk_in_time', type=float, 
+                        help='Time for walk-in ramp-up process in seconds.')
+
+    # AC input limiter (Diesel power limit). Doesn't seem to have a permanent option
+    parser.add_argument('--limit_input', type=float,
+                        help='Set AC input current limit (Diesel power limit) in Amps.')
+
+    # Do we restart automatically after overvoltage?
+    parser.add_argument('--restart_overvoltage', type=bool,
+                        help='Enable (True) or disable (False) restart after overvoltage.')
+
 
     args = parser.parse_args()    
 
@@ -193,15 +223,38 @@ if __name__ == "__main__":
         config(args.interface)    
 
     if args.mode == "set":
-        print(f"{args.permanent}")
+        # DC voltage
         if args.voltage is not None:
             set_voltage(args.interface, args.voltage, args.permanent)
+
+        # DC current
         if args.current_value is not None:
             set_current_value(args.interface, args.current_value, args.permanent)
+
         if args.current_percent is not None:
             set_current_percentage(args.interface, args.current_percent, args.permanent)
+
+        # Walk in
+        if args.walk_in is not None:
+            time = args.walk_in_time if args.walk_in_time is not None else 0.0
+            walk_in(args.interface, time=time, enable=args.walk_in)
+        elif args.walk_in_time is not None:
+            # If time is set but walk_in is not provided, raise an error
+            print("Error: '--walk_in_time' provided without '--walk_in'. Please specify '--walk_in True' or '--walk_in False'.")
+            exit(1)
+
+        # Input limit
+        if args.limit_input is not None:
+            limit_input(args.interface, args.limit_input)
+
+        # Restart after overvoltage
+        if args.restart_overvoltage is not None:
+            restart_overvoltage(args.interface, state=args.restart_overvoltage)
+
     elif args.mode== "get":
         receive_can_message(args.interface)
+
+
 
     #config('can0')
     #set_voltage('can0', 52.0, False)
